@@ -1,4 +1,5 @@
 import os
+import stat
 import sys
 import subprocess
 import pymongo
@@ -18,12 +19,13 @@ for root, dirs, files in os.walk(str(sys.argv[1])):
         fullpath = os.path.join(root, name)
         if(not any(x in fullpath for x in exclude)):
             print("scanning " + fullpath)
+            result=os.stat(fullpath)
             entry = dict(example) #make a copy of the example doc
             entry["name"] = name
             entry["path"] = fullpath
-            stat = os.stat(fullpath)
-            entry["owner"] = stat.st_uid
-            entry["lastmod"] = stat.st_mtime
-            entry["perms"] = stat.st_mode
-            entry["size"] = os.path.getsize(fullpath)
+            entry["owner"] = result.st_uid
+            entry["group"] = result.st_gid
+            entry["lastmod"] = result.st_mtime
+            entry["perms"] = oct(stat.S_IMODE(result.st_mode))
+            entry["size"] = result.st_size
             x = mycol.insert_one(entry)
