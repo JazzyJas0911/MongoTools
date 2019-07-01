@@ -27,5 +27,6 @@ for root, dirs, files in os.walk(str(sys.argv[1])):
             entry["group"] = result.st_gid
             entry["lastmod"] = result.st_mtime
             entry["perms"] = oct(stat.S_IMODE(result.st_mode))
+            entry["wread"] = int(str(oct(stat.S_IMODE(result.st_mode)))[-1]) >= 4
             entry["size"] = result.st_size
             x = mycol.insert_one(entry)
