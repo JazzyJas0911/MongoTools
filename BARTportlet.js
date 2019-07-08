@@ -38,4 +38,6 @@
          //var html = "<h1>Trains departing Dublin BART station in:\n</h1><h2>"+ times + "</h2>";
          this.$wrapper.append(html);
       }
+   });
+}(jQuery));
 
