@@ -1,9 +1,69 @@
+#TODO
+#verbose flag
+#no arguments in print? just do it all
+
+
 import os
 import stat
 import sys
 import subprocess
 import pymongo
+import time
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
+def dirinfo(fullpath):
+    #print("scanning " + fullpath)
+    result=os.stat(fullpath)
+    entry = {}
+    entry["name"] = name
+    entry["path"] = fullpath
+    entry["owner"] = result.st_uid
+    entry["group"] = result.st_gid
+    entry["lastmod"] = result.st_mtime
+    entry["perms"] = oct(stat.S_IMODE(result.st_mode))
+    entry["wread"] = int(str(oct(stat.S_IMODE(result.st_mode)))[-1]) >= 4
+    entry["size"] = result.st_size
+    return entry;
+
+class Watcher:
+    def __init__(self, toWatch):
+        self.observer = Observer()
+        self.search = toWatch
+
+    def run(self):
+        event_handler = Handler()
+        for DIRECTORY_TO_WATCH in self.search:
+            self.observer.schedule(event_handler, DIRECTORY_TO_WATCH, recursive=True)
+        self.observer.start()
+        try:
+            while True:
+                time.sleep(5)
+        except:
+            self.observer.stop()
+            print("Error")
+
+        self.observer.join()
+
+
+class Handler(FileSystemEventHandler):
+    @staticmethod
+    def on_any_event(event):
+        if event.is_directory:
+            if(event.event_type == 'created'):
+                mycol.insert_one(dirinfo(event.src_path))
+                print(event.src_path + " created")
+            elif(event.event_type == 'modified'):
+                mycol.update_one({"path": event.src_path},{"$set": dirinfo(event.src_path)})
+                print(event.src_path + " modified")
+            elif(event.event_type == 'moved'):
+                mycol.update_one({"path": event.src_path},{"$set": {"path": event.dest_path}})
+                print(event.src_path + " moved to " + event.dest_path)
+            elif(event.event_type == 'deleted'):
+                mycol.delete_one({"path": event.src_path})
+                print(event.src_path + " deleted")
+
+#########################################################################################
 conf = open("mongonas.conf", "r")
 clines = conf.readlines()
 conf.close()
@@ -57,27 +117,20 @@ uri = "mongodb://"
 
 if(usr is not None and pw is not None):
     uri = uri + (usr + ":" + pw + "@")
+
 uri = uri + (ip + ":" + port + "/")
 
 myclient = pymongo.MongoClient(uri)
 mydb = myclient[dbname]
 mycol = mydb[colname]
 
-example = {"owner": 0, "name": 0, "wread": 0,  "path": 0,  "lastmod": 0,  "group": 0,  "used-b": 0,  "used-p": 0,  "perms": 0,  "zone": 0,  "fstype": 0,  "size": 0,  "quota": 0, "fcount": 0}
 for directory in search:
     for root, dirs, files in os.walk(directory):
         for name in dirs:
             fullpath = os.path.join(root, name)
             if(not any(x in fullpath for x in exclude)):
-                print("scanning " + fullpath)
-                result=os.stat(fullpath)
-                entry = dict(example) #make a copy of the example doc
-                entry["name"] = name
-                entry["path"] = fullpath
-                entry["owner"] = result.st_uid
-                entry["group"] = result.st_gid
-                entry["lastmod"] = result.st_mtime
-                entry["perms"] = oct(stat.S_IMODE(result.st_mode))
-                entry["wread"] = int(str(oct(stat.S_IMODE(result.st_mode)))[-1]) >= 4
-                entry["size"] = result.st_size
+                entry = dirinfo(fullpath)
                 x = mycol.insert_one(entry)
+
+w = Watcher(search)
+w.run()
