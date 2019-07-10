@@ -52,16 +52,16 @@ class Handler(FileSystemEventHandler):
         if event.is_directory:
             if(event.event_type == 'created'):
                 mycol.insert_one(dirinfo(event.src_path))
-                print(event.src_path + " created")
+#                print(event.src_path + " created")
             elif(event.event_type == 'modified'):
                 mycol.update_one({"path": event.src_path},{"$set": dirinfo(event.src_path)})
-                print(event.src_path + " modified")
+#                print(event.src_path + " modified")
             elif(event.event_type == 'moved'):
                 mycol.update_one({"path": event.src_path},{"$set": {"path": event.dest_path}})
-                print(event.src_path + " moved to " + event.dest_path)
+#                print(event.src_path + " moved to " + event.dest_path)
             elif(event.event_type == 'deleted'):
                 mycol.delete_one({"path": event.src_path})
-                print(event.src_path + " deleted")
+#                print(event.src_path + " deleted")
 
 #########################################################################################
 conf = open("mongonas.conf", "r")
