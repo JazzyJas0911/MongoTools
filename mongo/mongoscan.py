@@ -131,7 +131,7 @@ for directory in search:
             if(not any(x in fullpath for x in exclude)):
                 entry = dirinfo(fullpath)
                 x = mycol.insert_one(entry)
-                print(entry[path], entry[size])
+                print(entry["path"], entry["size"])
 
 w = Watcher(search)
 w.run()

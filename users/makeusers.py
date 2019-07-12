@@ -21,7 +21,7 @@ for i in range(usercount):
    print(uname)
    subprocess.run(["useradd", uname,])
    if(usercount != 0):
-      subprocess.run(["dd", "if=/dev/null", "of=/home/" + uname + "/" + uname + "_garbage.txt", "bs=1M", "count=" + str(int((200 / usercount) * i))])
+      subprocess.run(["dd", "if=/dev/urandom", "of=/home/" + uname + "/" + uname + "_garbage.txt", "bs=1M", "count=" + str(int((200 / usercount) * i))])
    else:
       subprocess.run(["touch", "/home/" + uname + "/" + uname + "_garbage.txt"])
    subprocess.run(["chown", uname + ":" + uname, "/home/" + uname + "/" + uname + "_garbage.txt"])
