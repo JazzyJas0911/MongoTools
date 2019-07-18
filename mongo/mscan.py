@@ -1,11 +1,11 @@
-#TODO
-
 import os
 import stat
 import sys
 import subprocess
 import pymongo
 import time
+import logger
+import argparse
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -14,7 +14,7 @@ def dirinfo(fullpath):
         print("scanning " + fullpath)
     result=os.stat(fullpath)
     entry = {}
-    entry["name"] = name
+    entry["name"] = fullpath[fullpath.rfind("/"):]
     entry["path"] = fullpath
     entry["owner"] = result.st_uid
     entry["group"] = result.st_gid
@@ -28,6 +28,14 @@ def updateup(fullpath):
     while fullpath != "":
         mycol.update_one({"path": fullpath},{"$set": dirinfo(fullpath)})
         fullpath = fullpath[0:fullpath.rfind('/')]
+def scandown(path):
+    entry = dirinfo(path)
+    entry["/"] = {}
+    subs = [x for x in os.listdir(path) if os.path.isdir(path + "/" + x)]
+    for sub in subs:
+        if(sub not in exclude):
+            entry["/"][sub.translate({36 : None, 46: None})] = scandown(path + "/" + sub)
+    return(entry)
 
 def insertnd(toinsert, keytocheck):
     if(isinstance(toinsert, list)):
@@ -63,6 +71,7 @@ class Handler(FileSystemEventHandler):
     @staticmethod
     def on_any_event(event):
         if event.is_directory:
+            src = event.src_path.split("/")
             if(event.event_type == 'created'):
                 insertnd(dirinfo(event.src_path), "path")
                 if("--verbose" in sys.argv):
@@ -90,9 +99,22 @@ def killscript(pid):
     file.write("#!/bin/bash\nkill " + str(pid) + "\nrm -f $0")
     os.chmod(scriptpath + "/kill/" + str(pid) + ".sh", stat.S_IRWXU)
     file.close()
+def killfile(pid):
+    file = open(scriptpath + "/.kill.txt", "w")
+    file.write(str(pid))
+    file.close()
 #########################################################################################
+
 scriptpath = os.path.realpath(__file__)
 scriptpath = scriptpath[:scriptpath.rfind("/") + 1]
+
+if("--kill" in sys.argv):
+    file = open(scriptpath + "/.kill.txt", "r")
+    os.system("kill " + file.read())
+    file.close()
+    os.remove(scriptpath + "/.kill.txt")
+    exit()
+
 conf = open(scriptpath + "mongonas.conf", "r")
 
 clines = conf.readlines()
@@ -154,13 +176,11 @@ myclient = pymongo.MongoClient(uri)
 mydb = myclient[dbname]
 mycol = mydb[colname]
 for directory in search:
-    for root, dirs, files in os.walk(directory):
-        for name in dirs:
-            fullpath = os.path.join(root, name)
-            if(not any(x in fullpath for x in exclude)):
-                entry = dirinfo(fullpath)
-                insertnd(entry, "path")
+    if(not any(x in directory for x in exclude)):
+        insertnd(scandown(directory), "path")
+'''
 if("--once" not in sys.argv):
-    killscript(os.getpid())
+    killfile(os.getpid())
     w = Watcher(search)
     w.run()
+'''                                                                                             

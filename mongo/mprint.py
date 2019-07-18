@@ -54,14 +54,18 @@ mycol = mydb[colname]
 
 
 for x in mycol.find():
-    if(len(sys.argv) >= 3):
-       keychain = sys.argv[2:] 
-       for key in keychain:
-          if(key.isdigit()):
-              key = int(key)
-          x = x[key]
-    if(isinstance(x, dict)):
+    if("-k" in sys.argv):
+        keychain = sys.argv[sys.argv.index("-k") + 1:] 
+        try:
+            for key in keychain:
+                if(key.isdigit()):
+                    key = int(key)
+                x = x[key]
+        except(KeyError, IndexError):
+            continue
+    if(("--klist" in sys.argv or "--brief" in sys.argv) and isinstance(x, dict)):
         print("Keys available: " + str(x.keys()))
-    if(isinstance(x, list)):
+    if(("--klist" in sys.argv or "--brief" in sys.argv) and isinstance(x, list)):
         print("Indices available: 0:" + str(len(x) - 1))
-    print(x)
+    if("--brief" not in sys.argv):
+        print(x)

@@ -1,30 +1,51 @@
 import logging
+import argparse
 
-# create logger
-logger = logging.getLogger('Logger_Test')
-logger.setLevel(logging.DEBUG)
 
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+def argcreate():
+    #ArgumentParser holds the info necessary to parse the command line into Python data types.
+    parser = argparse.ArgumentParser(description='Process some integers.')
 
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    parser.add_argument('integers', metavar='N', type=int, nargs='+',
+                    help='an integer for the accumulator')
+    parser.add_argument('--sum', dest='accumulate', action='store_const',
+                    const=sum, default=max,
+                    help='sum the integers (default: find the max)')
 
-# add formatter to ch
-ch.setFormatter(formatter)
+    args = parser.parse_args()
+    print(args.accumulate(args.integers))
 
-# add ch to logger
-logger.addHandler(ch)
+def argtut():
+    parser= argparse.ArgumentParser()
+    parser.add_argument("bark", help="echo the string you use here")
+    args = parser.parse_args()
+    print(args.bark)
 
-# 'application' code
-logger.debug('debug message')
-logger.info('info message')
-logger.warning('warn message')
-logger.error('error message')
-logger.critical('critical message')
+def loggstuff(): 
+	# create logger
+	logger = logging.getLogger('Logger_Test')
+	logger.setLevel(logging.DEBUG)
 
-logger.info('Begging test loop')
-for i in range(10):
-    print('lol')
-    logger.warning('this loop is dumb')
+	# create console handler and set level to debug
+	ch = logging.StreamHandler()
+	ch.setLevel(logging.DEBUG)
+
+	# create formatter
+	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+	# add formatter to ch
+	ch.setFormatter(formatter)
+
+	# add ch to logger
+	logger.addHandler(ch)
+
+	# 'application' code
+	logger.debug('debug message')
+	logger.info('info message')
+	logger.warning('warn message')
+	logger.error('error message')
+	logger.critical('critical message')
+
+	logger.info('Begging test loop')
+#argcreate()
+argtut()
