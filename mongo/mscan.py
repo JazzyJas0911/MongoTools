@@ -86,7 +86,7 @@ class Handler(FileSystemEventHandler):
                     print(event.src_path + " deleted")
 
 def killscript(pid):
-    file = open(scriptpath + "/kill/" + str(pid) + ".sh", "w")
+    file = open(scriptpath + "kill/" + str(pid) + ".sh", "w")
     file.write("#!/bin/bash\nkill " + str(pid) + "\nrm -f $0")
     os.chmod(scriptpath + "/kill/" + str(pid) + ".sh", stat.S_IRWXU)
     file.close()
@@ -94,6 +94,12 @@ def killscript(pid):
 scriptpath = os.path.realpath(__file__)
 scriptpath = scriptpath[:scriptpath.rfind("/") + 1]
 conf = open(scriptpath + "mongonas.conf", "r")
+
+if("--kill" in sys.argv):
+    kill = open(scriptpath + ".kill.txt", "r")
+    os.system("kill " + kill.read())
+    kill.close()
+    exit()
 
 clines = conf.readlines()
 conf.close()
@@ -161,6 +167,8 @@ for directory in search:
                 entry = dirinfo(fullpath)
                 insertnd(entry, "path")
 if("--once" not in sys.argv):
-    killscript(os.getpid())
+    kill = open(scriptpath + ".kill.txt", "w")
+    kill.write(str((os.getpid())))
+    kill.close() 
     w = Watcher(search)
     w.run()
